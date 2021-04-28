@@ -32,6 +32,31 @@ Al poner estas credenciales nos va a pedir que cambiemos la clave.
 
 Siguiendo [este tutorial](https://linuxconfig.org/ubuntu-20-04-connect-to-wifi-from-command-line), esta es la configuración que me sirve:
 
+Buscar el nombre del wifi:
+
+```bash
+ls /sys/class/net
+```
+
+El resultado se ve algo así:
+
+`enp0s25  lo  wlan0` y el wifi en este caso va a ser `wlan0`.
+
+Buscar el archivo del **Netplan**:
+
+```sh
+cd /
+
+ls /etc/netplan/ 
+# es el archivo 50-cloud-init.yaml o 01-network-manager-all.yaml
+```
+
+Editar el archivo de **Netplan**
+
+```sh
+sudo nano etc/netplan/50-cloud-init.yaml
+```
+
 ```sh
 network:
     ethernets:
@@ -48,6 +73,14 @@ network:
             dhcp4: true
 ```
 
+Guardar `Ctrl + o`  y salir `Ctrl + x`.
+
+Reiniciar **Netplan**:
+
+```sh
+sudo netplan apply
+```
+
 Luego de configurar el WIFI, Ubuntu va a realizar una serie de actualizaciones e instalaciones con `APT`. Esto toma un tiempo y si queremos instalar cosas nos va a dar un error parecido a:
 
 ```sh
@@ -56,7 +89,7 @@ Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is he
 
 Hay que esperar!
 
-Podemos revisar que processos estan usando `APT` con el comando:
+Podemos revisar que procesos están usando `APT` con el comando:
 
 ```sh
 ps aux | grep -i apt
@@ -140,11 +173,26 @@ sudo docker-compose version
 ssh-keygen -t rsa -b 4096
 ```
 
+Desde Mac: 
+
 ```sh
-sh-copy-id -i ~/.ssh/id_rsa.pub ubuntu@192.168.0.9
+cat ~/.ssh/id_rsa.pub | ssh ubuntu@192.168.0.9 "cat >> ~/.ssh/authorized_keys"
 ```
 
 ## Contexto
+
+Primero quitamos la necesidad de usar sudo para comandos docker.
+
+Desde el servidor:
+
+```sh
+# En este caso el usuario es ubuntu pero si es otro usuario hay que cambiar el último parametro del comando.
+sudo usermod -aG docker ubuntu
+```
+
+```sh
+newgrp docker
+```
 
 Con las opciones de contexto en docker podemos correr comandos desde nuestro computador en el servidor.
 
@@ -162,4 +210,10 @@ docker --context rpi version
 
 ```sh
 docker-compose --context rpi up -d
+```
+
+Por ejemplo, para iniciar típicamente los contenedores de producción:
+
+```sh
+docker-compose --context rpi -f docker-compose.yml -f docker-produccion.yml up
 ```
